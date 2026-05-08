@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OutlyStudio — Built by hand. Done right.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --black:       #060606;
+      --black-2:     #0f0f0f;
+      --black-3:     #181818;
+      --charcoal:    #242424;
+      --charcoal-2:  #303030;
+      --steel:       #565656;
+      --silver:      #8e8880;
+      --champagne:   #c4bdb5;
+      --cream:       #ddd7d1;
+      --white:       #f0ece8;
+      --accent-dim:  rgba(196,189,181,.18);
+      --accent-glow: rgba(196,189,181,.06);
+
+      --ff-head: 'Syne', sans-serif;
+      --ff-body: 'Manrope', sans-serif;
+      --ease-out: cubic-bezier(.16,1,.3,1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; -webkit-font-smoothing: antialiased; }
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: var(--ff-body);
+      font-weight: 400;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* GRAIN */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      opacity: .014; pointer-events: none; z-index: 9999;
+    }
+
+    /* CURSOR */
+    #cursor {
+      position: fixed; width: 5px; height: 5px;
+      background: var(--champagne); border-radius: 50%;
+      pointer-events: none; z-index: 10000;
+      transform: translate(-50%,-50%) scale(1);
+      transition: transform .15s var(--ease-out), opacity .2s;
+    }
+    #cursor.expand { transform: translate(-50%,-50%) scale(3); opacity: .5; }
+
+    ::-webkit-scrollbar { width: 2px; }
+    ::-webkit-scrollbar-track { background: var(--black); }
+    ::-webkit-scrollbar-thumb { background: var(--steel); }
+    ::selection { background: var(--champagne); color: var(--black); }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.6rem 3.5rem;
+    }
+    nav::after {
+      content: ''; position: absolute; bottom: 0; left: 3.5rem; right: 3.5rem;
+      height: 1px; background: linear-gradient(90deg, transparent, var(--charcoal-2), transparent);
+      opacity: 0; transition: opacity .6s;
+    }
+    nav.scrolled::after { opacity: 1; }
+    nav.scrolled { background: rgba(6,6,6,.82); backdrop-filter: blur(18px); }
+
+    .nav-logo { display: flex; align-items: center; gap: .75rem; text-decoration: none; }
+    .nav-logo img { width: 34px; height: 34px; object-fit: contain; filter: brightness(1.1); }
+    .nav-logo-name {
+      font-family: var(--ff-head); font-weight: 700; font-size: .95rem;
+      letter-spacing: .12em; text-transform: uppercase; color: var(--white);
+    }
+
+    .nav-links { display: flex; align-items: center; gap: 3rem; list-style: none; }
+    .nav-links a {
+      font-size: .78rem; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--silver); text-decoration: none; position: relative; transition: color .3s;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -.25rem; left: 0;
+      width: 0; height: 1px; background: var(--champagne); transition: width .4s var(--ease-out);
+    }
+    .nav-links a:hover { color: var(--white); }
+    .nav-links a:hover::after { width: 100%; }
+
+    .nav-cta {
+      color: var(--black) !important; background: var(--champagne);
+      padding: .6rem 1.4rem; border-radius: 2px; text-decoration: none;
+      transition: background .3s, transform .2s var(--ease-out) !important;
+    }
+    .nav-cta::after { display: none !important; }
+    .nav-cta:hover { background: var(--cream) !important; color: var(--black) !important; transform: translateY(-1px); }
+
+    .nav-actions { display: flex; align-items: center; gap: 1rem; }
+    .language-switcher {
+      display: flex; align-items: center; gap: .42rem;
+      padding: .32rem; border: 1px solid rgba(196,189,181,.18); border-radius: 999px;
+      background: rgba(15,15,15,.62); backdrop-filter: blur(12px);
+    }
+    .lang-btn {
+      width: 2rem; height: 2rem; border-radius: 50%; border: 1px solid transparent;
+      background: transparent; display: inline-flex; align-items: center; justify-content: center;
+      padding: 0; cursor: none; transition: border-color .25s, transform .25s, background .25s;
+    }
+    .lang-btn:hover, .lang-btn.active { border-color: var(--champagne); background: rgba(196,189,181,.08); transform: translateY(-1px); }
+    .flag {
+      position: relative; width: 1.34rem; height: 1.34rem; border-radius: 50%; overflow: hidden;
+      display: block; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); flex-shrink: 0;
+    }
+    .flag-us { background: repeating-linear-gradient(to bottom,#c91f2e 0 7.69%,#fff 7.69% 15.38%); }
+    .flag-us::before { content: ''; position: absolute; left: 0; top: 0; width: 52%; height: 54%; background: #21468b; }
+    .flag-us::after { content: '* * *'; position: absolute; left: 1px; top: 1px; width: 50%; color: #fff; font-size: 5px; line-height: 5px; letter-spacing: 1px; }
+    .flag-gr { background: repeating-linear-gradient(to bottom,#0d5eaf 0 11.11%,#fff 11.11% 22.22%); }
+    .flag-gr::before { content: ''; position: absolute; left: 0; top: 0; width: 45%; height: 55%; background: #0d5eaf; }
+    .flag-gr::after { content: ''; position: absolute; left: 0; top: 22%; width: 45%; height: 11%; background: #fff; box-shadow: 16px -8px 0 -7px #fff, 16px 8px 0 -7px #fff; transform: translateY(-50%); }
+    .flag-de { background: linear-gradient(to bottom,#050505 0 33.33%,#dd0000 33.33% 66.66%,#ffce00 66.66%); }
+    .flag-it { background: linear-gradient(to right,#009246 0 33.33%,#fff 33.33% 66.66%,#ce2b37 66.66%); }
+
+
+    .hamburger {
+      display: none; flex-direction: column; gap: 5px;
+      background: none; border: none; cursor: none; padding: .5rem;
+      position: relative; z-index: 102;
+    }
+    .hamburger span { display: block; width: 22px; height: 1px; background: var(--silver); transition: .3s; }
+    .hamburger.active {
+      position: fixed; top: 1.1rem; right: 1rem;
+      border: 1px solid rgba(196,189,181,.22); border-radius: 4px;
+      background: rgba(6,6,6,.72); backdrop-filter: blur(10px);
+    }
+    .hamburger.active span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+    .hamburger.active span:nth-child(2) { opacity: 0; }
+    .hamburger.active span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+    body.menu-open { overflow: hidden; }
+    .nav-links.mobile-open {
+      display: flex !important; flex-direction: column; position: fixed;
+      inset: 0; width: 100vw; height: 100dvh;
+      background: rgba(6,6,6,.98); align-items: center; justify-content: center;
+      gap: clamp(1.35rem, 4vh, 2.25rem); z-index: 101;
+      padding: clamp(5rem, 12vh, 7rem) 1.5rem 3rem;
+      overflow-y: auto; overscroll-behavior: contain; backdrop-filter: blur(14px);
+    }
+    .nav-links.mobile-open a {
+      font-size: clamp(1.15rem, 4.8vw, 1.65rem); letter-spacing: .08em; color: var(--white);
+      max-width: min(82vw, 28rem); text-align: center; line-height: 1.2;
+    }
+    .nav-links.mobile-open .nav-cta {
+      width: min(82vw, 28rem); justify-content: center;
+      padding: 1rem 1.25rem; color: var(--black) !important;
+      white-space: normal; text-align: center;
+    }
+    @media (max-height: 620px) {
+      .nav-links.mobile-open { justify-content: flex-start; }
+    }
+
+    /* SECTION LABEL */
+    .section-label {
+      font-size: .7rem; letter-spacing: .22em; text-transform: uppercase;
+      color: var(--steel); margin-bottom: 1.5rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .section-label::before {
+      content: ''; display: block; width: 2.5rem; height: 1px;
+      background: var(--steel); flex-shrink: 0;
+    }
+
+    /* HERO */
+    #hero {
+      min-height: 100dvh;
+      display: grid; grid-template-rows: 1fr auto;
+      padding: 0 3.5rem; padding-top: 7rem; overflow: hidden;
+    }
+    .hero-content { display: flex; flex-direction: column; justify-content: center; position: relative; }
+
+    .hero-eyebrow {
+      font-size: .7rem; letter-spacing: .25em; text-transform: uppercase;
+      color: var(--steel); margin-bottom: 2.5rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .hero-eyebrow > span:first-child { display: block; width: 3rem; height: 1px; background: var(--steel); flex-shrink: 0; }
+
+    .hero-headline {
+      font-family: var(--ff-head); font-weight: 800;
+      font-size: clamp(3.5rem, 10vw, 9.5rem);
+      line-height: .92; letter-spacing: -.03em;
+      margin-bottom: 3rem; max-width: 16ch;
+    }
+    .hero-headline .line { display: block; overflow: hidden; }
+    .hero-headline .word { display: inline-block; }
+    .hero-headline .accent-word {
+      background: linear-gradient(135deg, var(--silver) 0%, var(--cream) 40%, var(--champagne) 70%, var(--steel) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .hero-sub-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 3rem; }
+    .hero-descriptor { font-size: clamp(.9rem,1.5vw,1.05rem); color: var(--silver); line-height: 1.7; max-width: 38ch; font-weight: 300; }
+
+    .hero-cta-group { display: flex; align-items: center; gap: 2rem; flex-shrink: 0; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: .75rem;
+      background: var(--champagne); color: var(--black);
+      font-family: var(--ff-body); font-size: .78rem; font-weight: 600;
+      letter-spacing: .14em; text-transform: uppercase; text-decoration: none;
+      padding: 1rem 2rem; border-radius: 2px; border: none; cursor: none;
+      transition: background .3s, transform .3s var(--ease-out), box-shadow .3s;
+    }
+    .btn-primary:hover { background: var(--cream); transform: translateY(-2px); box-shadow: 0 12px 40px rgba(196,189,181,.2); }
+    .btn-primary svg { transition: transform .3s var(--ease-out); }
+    .btn-primary:hover svg { transform: translateX(4px); }
+
+    .btn-ghost {
+      font-size: .78rem; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--silver); text-decoration: none;
+      display: flex; align-items: center; gap: .5rem; transition: color .3s; cursor: none;
+    }
+    .btn-ghost:hover { color: var(--white); }
+    .btn-ghost::after { content: '↓'; display: inline-block; transition: transform .3s var(--ease-out); }
+    .btn-ghost:hover::after { transform: translateY(3px); }
+
+    .hero-bottom {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 2rem 0; border-top: 1px solid var(--charcoal);
+    }
+    .hero-bottom-stat {
+      font-size: .7rem; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--steel); display: flex; flex-direction: column; gap: .3rem;
+    }
+    .hero-bottom-stat strong {
+      display: block; font-family: var(--ff-head); font-weight: 600;
+      font-size: .82rem; letter-spacing: .06em; color: var(--champagne); margin-bottom: 0;
+    }
+
+    /* diagonal removed */
+
+    /* PROCESS BAND */
+    #process-band {
+      border-top: 1px solid var(--charcoal); border-bottom: 1px solid var(--charcoal);
+      padding: 4rem 3.5rem; overflow: hidden;
+    }
+    .process-marquee-track {
+      display: flex; gap: 4rem; width: max-content;
+      animation: marquee 28s linear infinite;
+    }
+    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .process-marquee-track:hover { animation-play-state: paused; }
+    .process-item { display: flex; align-items: center; gap: 1.25rem; white-space: nowrap; flex-shrink: 0; }
+    .process-item-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--steel); flex-shrink: 0; }
+    .process-item-text {
+      font-family: var(--ff-head); font-weight: 600; font-size: 1rem;
+      letter-spacing: .06em; text-transform: uppercase; color: var(--steel);
+    }
+
+    /* ABOUT / ETHOS */
+    #ethos {
+      padding: 9rem 3.5rem; display: grid; grid-template-columns: 1fr 1fr;
+      gap: 6rem; align-items: start; border-top: 1px solid var(--charcoal);
+    }
+    .ethos-left { position: sticky; top: 8rem; }
+    .ethos-heading {
+      font-family: var(--ff-head); font-weight: 800;
+      font-size: clamp(2.4rem,5vw,4rem); line-height: 1.0;
+      letter-spacing: -.03em; margin-bottom: 2rem;
+    }
+    .ethos-heading em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--silver) 0%, var(--cream) 55%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .ethos-tagline {
+      font-size: .85rem; letter-spacing: .16em; text-transform: uppercase; color: var(--steel);
+      border-left: 1px solid var(--charcoal-2); padding-left: 1.25rem; line-height: 1.6;
+    }
+    .ethos-pillars { display: flex; flex-direction: column; gap: 3.5rem; }
+    .ethos-pillar { padding-bottom: 3.5rem; border-bottom: 1px solid var(--charcoal); }
+    .ethos-pillar:last-child { border-bottom: none; padding-bottom: 0; }
+    .pillar-number {
+      font-family: var(--ff-head); font-weight: 700; font-size: .7rem;
+      letter-spacing: .2em; color: var(--steel); margin-bottom: 1rem;
+    }
+    .pillar-title {
+      font-family: var(--ff-head); font-weight: 700; font-size: 1.35rem;
+      letter-spacing: -.01em; margin-bottom: 1rem; color: var(--white);
+    }
+    .pillar-body { font-size: .9rem; line-height: 1.85; color: var(--silver); font-weight: 300; max-width: 46ch; }
+
+    /* SERVICES */
+    #expertise { padding: 9rem 3.5rem; border-top: 1px solid var(--charcoal); }
+    .expertise-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 5rem; gap: 3rem;
+    }
+    .expertise-heading {
+      font-family: var(--ff-head); font-weight: 800;
+      font-size: clamp(2.4rem,5vw,4rem); letter-spacing: -.03em; line-height: 1.0; max-width: 12ch;
+    }
+    .expertise-note { font-size: .85rem; color: var(--silver); max-width: 32ch; line-height: 1.7; font-weight: 300; text-align: right; }
+
+    .services-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 1px; background: var(--charcoal); border: 1px solid var(--charcoal);
+    }
+    .service-card {
+      background: var(--black); padding: 3rem 2.5rem;
+      position: relative; overflow: hidden; transition: background .4s; cursor: none;
+    }
+    .service-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--accent-glow), transparent 60%);
+      opacity: 0; transition: opacity .4s;
+    }
+    .service-card:hover { background: var(--black-3); }
+    .service-card:hover::before { opacity: 1; }
+    .service-icon { width: 2.5rem; height: 2.5rem; margin-bottom: 2rem; color: var(--steel); transition: color .3s; }
+    .service-card:hover .service-icon { color: var(--champagne); }
+    .service-title {
+      font-family: var(--ff-head); font-weight: 700; font-size: 1.15rem;
+      letter-spacing: -.01em; margin-bottom: .85rem; transition: color .3s;
+    }
+    .service-card:hover .service-title { color: var(--champagne); }
+    .service-desc { font-size: .82rem; line-height: 1.8; color: var(--steel); font-weight: 300; }
+    .service-price {
+      margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid var(--charcoal);
+      font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--charcoal-2);
+      font-family: var(--ff-head); font-weight: 600; transition: color .3s;
+    }
+    .service-card:hover .service-price { color: var(--steel); }
+    .service-number {
+      position: absolute; top: 2.5rem; right: 2.5rem;
+      font-family: var(--ff-head); font-weight: 700; font-size: .7rem;
+      letter-spacing: .14em; color: var(--charcoal-2); transition: color .3s;
+    }
+    .service-card:hover .service-number { color: var(--steel); }
+
+    /* WORK */
+    #work { padding: 9rem 3.5rem; border-top: 1px solid var(--charcoal); }
+    .work-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 5rem; gap: 3rem;
+    }
+    .work-heading {
+      font-family: var(--ff-head); font-weight: 800;
+      font-size: clamp(2.4rem,5vw,4rem); letter-spacing: -.03em; line-height: 1.0;
+    }
+    .work-note {
+      font-size: .78rem; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--steel); max-width: 24ch; text-align: right; line-height: 1.7;
+    }
+
+    /* Braise featured project */
+    .work-featured {
+      display: grid; grid-template-columns: 1.2fr 1fr;
+      border: 1px solid var(--charcoal); margin-bottom: 1.5rem;
+    }
+    .work-preview {
+      aspect-ratio: 4/3; position: relative; overflow: hidden; background: #170F08;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: clamp(1.5rem,3vw,2.5rem);
+    }
+    .work-preview::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 45%, rgba(55,30,8,.65) 0%, transparent 65%);
+    }
+    .bp-nav { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
+    .bp-logo {
+      font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(.6rem,1.3vw,.82rem);
+      letter-spacing: .22em; text-transform: uppercase; color: #EBE0C8; font-weight: 300;
+    }
+    .bp-links {
+      display: flex; gap: clamp(.7rem,1.5vw,1.3rem);
+      font-size: clamp(.44rem,.85vw,.58rem); letter-spacing: .15em; text-transform: uppercase;
+      color: rgba(235,224,200,.4); font-family: 'Cormorant Garamond', serif;
+    }
+    .bp-center { text-align: center; position: relative; z-index: 1; }
+    .bp-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(3rem,9vw,7rem); font-weight: 300; letter-spacing: .28em;
+      color: #EBE0C8; line-height: 1; margin-bottom: clamp(.5rem,1.5vw,1rem);
+    }
+    .bp-rule { width: 28px; height: 1px; background: rgba(235,224,200,.35); margin: 0 auto clamp(.4rem,1vw,.7rem); }
+    .bp-sub {
+      font-size: clamp(.38rem,.75vw,.52rem); letter-spacing: .24em; text-transform: uppercase;
+      color: rgba(235,224,200,.3); font-family: 'Cormorant Garamond', serif;
+    }
+    .bp-scroll { text-align: center; font-size: clamp(.38rem,.65vw,.5rem); letter-spacing: .22em; text-transform: uppercase; color: rgba(235,224,200,.2); position: relative; z-index: 1; }
+
+    .work-info {
+      background: var(--black-2); padding: clamp(2rem,4vw,3.5rem);
+      display: flex; flex-direction: column; justify-content: space-between;
+      border-left: 1px solid var(--charcoal);
+    }
+    .work-tag {
+      font-size: .68rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+      color: var(--champagne); margin-bottom: 1.25rem; font-family: var(--ff-head);
+      display: flex; align-items: center; gap: .6rem;
+    }
+    .tag-dot { width: 5px; height: 5px; background: var(--champagne); border-radius: 50%; }
+    .work-title {
+      font-family: var(--ff-head); font-weight: 800;
+      font-size: clamp(1.6rem,3vw,2.5rem); letter-spacing: -.02em; line-height: 1.1;
+      color: var(--white); margin-bottom: 1.25rem;
+    }
+    .work-desc { font-size: .88rem; font-weight: 300; color: var(--silver); line-height: 1.85; margin-bottom: 2rem; }
+    .work-meta { display: flex; flex-wrap: wrap; gap: 1.5rem; padding-top: 1.75rem; border-top: 1px solid var(--charcoal); }
+    .meta-label { font-size: .65rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--steel); margin-bottom: .25rem; font-family: var(--ff-head); }
+    .meta-value { font-size: .83rem; font-weight: 300; color: var(--white); }
+
+    
+    .work-featured + .work-featured { margin-top: 1.5rem; }
+    .work-preview.luminal-preview {
+      background: linear-gradient(90deg, #d6c2aa 0%, #c2a47f 53%, #e2ded6 100%);
+      color: #211812; font-family: Georgia, serif;
+    }
+    .work-preview.luminal-preview::before {
+      background: linear-gradient(100deg, rgba(248,237,221,.6) 0 46%, rgba(77,45,28,.12) 46% 48%, transparent 48%),
+                  radial-gradient(ellipse at 78% 42%, rgba(75,35,22,.35), transparent 33%);
+      filter: blur(.2px);
+    }
+    .lp-nav { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; font-size: clamp(.45rem,.8vw,.58rem); letter-spacing: .22em; text-transform: uppercase; color: rgba(32,24,18,.72); }
+    .lp-logo { font-size: clamp(.8rem,1.5vw,1.08rem); letter-spacing: .08em; text-transform: none; }
+    .lp-center { position: relative; z-index: 1; max-width: 64%; }
+    .lp-kicker { font-size: clamp(.38rem,.7vw,.5rem); letter-spacing: .2em; text-transform: uppercase; color: rgba(32,24,18,.42); margin-bottom: clamp(1rem,2vw,1.7rem); }
+    .lp-title { font-size: clamp(2rem,5.8vw,5.4rem); line-height: .94; letter-spacing: -.02em; color: #211812; }
+    .lp-title em { display: block; font-style: italic; color: rgba(116,83,52,.58); }
+    .lp-copy { margin-top: clamp(1rem,2vw,1.4rem); font-family: var(--ff-body); font-size: clamp(.48rem,.8vw,.62rem); line-height: 1.7; color: rgba(32,24,18,.5); max-width: 32ch; }
+    .lp-scroll { position: absolute; right: 1.4rem; bottom: 1.4rem; writing-mode: vertical-rl; font-size: clamp(.38rem,.65vw,.5rem); letter-spacing: .22em; text-transform: uppercase; color: rgba(32,24,18,.38); z-index: 1; }
+
+    /* Next project invitation */
+    .work-next {
+      margin-top: 2.5rem; padding: 3rem 3.5rem;
+      border: 1px solid var(--charcoal); display: flex; align-items: center;
+      justify-content: space-between; gap: 2rem;
+      transition: border-color .4s;
+    }
+    .work-next:hover { border-color: var(--charcoal-2); }
+    .work-next-text {
+      font-family: var(--ff-head); font-weight: 700; font-size: clamp(1.1rem,2vw,1.5rem);
+      letter-spacing: -.015em; color: var(--charcoal-2); transition: color .4s;
+    }
+    .work-next:hover .work-next-text { color: var(--steel); }
+    .work-next-label {
+      font-size: .68rem; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--charcoal-2); transition: color .4s;
+    }
+    .work-next:hover .work-next-label { color: var(--steel); }
+    .work-next-cta {
+      font-size: .75rem; letter-spacing: .16em; text-transform: uppercase;
+      color: var(--steel); text-decoration: none; white-space: nowrap;
+      display: flex; align-items: center; gap: .6rem; flex-shrink: 0;
+      transition: color .3s;
+    }
+    .work-next-cta:hover { color: var(--champagne); }
+
+    /* PROCESS STEPS */
+    #process { padding: 9rem 3.5rem; border-top: 1px solid var(--charcoal); }
+    .process-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 5rem; gap: 3rem;
+    }
+    .process-heading {
+      font-family: var(--ff-head); font-weight: 800;
+      font-size: clamp(2.4rem,5vw,4rem); letter-spacing: -.03em; line-height: 1.0;
+    }
+    .process-sub { font-size: .85rem; color: var(--silver); max-width: 32ch; line-height: 1.7; font-weight: 300; text-align: right; }
+    .process-steps {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 1px; background: var(--charcoal); border: 1px solid var(--charcoal);
+    }
+    .process-step {
+      background: var(--black); padding: 3rem 2.25rem; position: relative; transition: background .3s;
+    }
+    .process-step:hover { background: var(--black-3); }
+    .step-number {
+      font-family: var(--ff-head); font-weight: 700; font-size: .7rem;
+      letter-spacing: .2em; color: var(--champagne); margin-bottom: 2rem;
+    }
+    .step-title {
+      font-family: var(--ff-head); font-weight: 700; font-size: 1.25rem;
+      letter-spacing: -.01em; color: var(--white); margin-bottom: 1rem;
+    }
+    .step-desc { font-size: .82rem; font-weight: 300; color: var(--silver); line-height: 1.85; }
+
+    /* FOOTER */
+    footer {
+      padding: 7rem 3.5rem 4rem;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 6rem; align-items: end;
+      border-top: 1px solid var(--charcoal);
+    }
+    .footer-cta-label {
+      font-size: .7rem; letter-spacing: .22em; text-transform: uppercase;
+      color: var(--steel); margin-bottom: 1.5rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .footer-cta-label::before { content: ''; display: block; width: 2.5rem; height: 1px; background: var(--steel); }
+    .footer-email {
+      font-family: var(--ff-head); font-weight: 700;
+      font-size: clamp(1.4rem,3.5vw,2.8rem); letter-spacing: -.02em;
+      color: var(--white); text-decoration: none; display: inline-block;
+      position: relative; transition: color .3s;
+    }
+    .footer-email::after {
+      content: ''; position: absolute; bottom: 0; left: 0;
+      width: 100%; height: 1px; background: var(--champagne);
+      transform: scaleX(0); transform-origin: right; transition: transform .5s var(--ease-out);
+    }
+    .footer-email:hover { color: var(--champagne); }
+    .footer-email:hover::after { transform: scaleX(1); transform-origin: left; }
+
+    .footer-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3rem; }
+    .footer-nav { display: flex; gap: 2.5rem; list-style: none; }
+    .footer-nav a {
+      font-size: .78rem; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--steel); text-decoration: none; transition: color .3s;
+    }
+    .footer-nav a:hover { color: var(--white); }
+
+    .footer-social { display: flex; gap: 1.5rem; list-style: none; }
+    .footer-social a {
+      display: flex; align-items: center; justify-content: center;
+      width: 2.5rem; height: 2.5rem; border: 1px solid var(--charcoal); border-radius: 2px;
+      color: var(--steel); text-decoration: none; font-size: .7rem; font-weight: 600;
+      letter-spacing: .08em; font-family: var(--ff-head);
+      transition: border-color .3s, color .3s, background .3s;
+    }
+    .footer-social a:hover { border-color: var(--champagne); color: var(--champagne); background: var(--accent-dim); }
+    .footer-social a svg { width: 16px; height: 16px; stroke: currentColor; }
+
+    .footer-bottom {
+      grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between;
+      padding-top: 3rem; margin-top: 1rem; border-top: 1px solid var(--charcoal);
+    }
+    .footer-brand { display: flex; align-items: center; gap: .75rem; }
+    .footer-brand img { width: 28px; height: 28px; object-fit: contain; opacity: .7; }
+    .footer-brand span {
+      font-family: var(--ff-head); font-weight: 700; font-size: .8rem;
+      letter-spacing: .16em; text-transform: uppercase; color: var(--steel);
+    }
+    .footer-copy { font-size: .7rem; letter-spacing: .1em; color: var(--charcoal-2); }
+
+    /* REVEAL */
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity .9s var(--ease-out), transform .9s var(--ease-out); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: .1s; }
+    .reveal-delay-2 { transition-delay: .22s; }
+    .reveal-delay-3 { transition-delay: .34s; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1180px) {
+      nav { padding: 1.35rem 1.5rem; }
+      nav::after { left: 1.5rem; right: 1.5rem; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .nav-actions { gap: .75rem; }
+      .language-switcher { gap: .28rem; padding: .27rem; }
+      .lang-btn { width: 1.78rem; height: 1.78rem; }
+      .flag { width: 1.14rem; height: 1.14rem; }
+    }
+    @media (max-width: 1024px) {
+      nav { padding: 1.35rem 1.5rem; }
+      #hero { padding: 0 2rem; padding-top: 7rem; }
+      #ethos { padding: 6rem 2rem; grid-template-columns: 1fr; gap: 4rem; }
+      .ethos-left { position: static; }
+      #expertise, #work, #process { padding: 6rem 2rem; }
+      .services-grid { grid-template-columns: 1fr; }
+      .work-featured { grid-template-columns: 1fr; }
+      .work-next { padding: 2rem 1.5rem; flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+      footer { padding: 5rem 2rem 3rem; grid-template-columns: 1fr; gap: 3rem; }
+      .footer-right { align-items: flex-start; }
+      .footer-bottom { flex-direction: column; gap: 1.5rem; align-items: flex-start; }
+      .process-steps { grid-template-columns: 1fr 1fr; }
+    }
+    .work-next { text-decoration: none; display: flex; }
+    @media (max-width: 768px) {
+      nav { padding: 1.1rem 1rem; }
+      .nav-actions { gap: .55rem; }
+      .language-switcher { gap: .2rem; padding: .22rem; }
+      .lang-btn { width: 1.55rem; height: 1.55rem; }
+      .flag { width: 1rem; height: 1rem; }
+      #hero { padding: 0 1.5rem; padding-top: 6rem; }
+      .hero-sub-row { flex-direction: column; align-items: flex-start; gap: 2rem; }
+      .hero-bottom { display: none; }
+      #ethos, #expertise, #work, #process { padding: 5rem 1.5rem; }
+      .expertise-header, .work-header, .process-header { flex-direction: column; align-items: flex-start; }
+      .expertise-note, .work-note, .process-sub { text-align: left; }
+      footer { padding: 4rem 1.5rem 3rem; }
+      .process-steps { grid-template-columns: 1fr; }
+      body { cursor: auto; }
+      #cursor { display: none; }
+    }
+    @media (max-width: 430px) {
+      .nav-logo { gap: .45rem; }
+      .nav-logo img { width: 30px; height: 30px; }
+      .nav-logo-name { font-size: .72rem; letter-spacing: .08em; }
+      .hamburger { padding: .35rem; }
+      .hamburger span { width: 20px; }
+    }
+    @media (min-width: 1181px) {
+      .nav-links { display: flex !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="cursor"></div>
+
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <img src="../OutlyStudio Brands/BA561871-613A-4593-8EF0-6CC9C31D8652.JPEG" alt="OutlyStudio" />
+    <span class="nav-logo-name">OutlyStudio</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#ethos" data-i18n="navAbout">About</a></li>
+    <li><a href="#expertise" data-i18n="navServices">Services</a></li>
+    <li><a href="#work" data-i18n="navWork">Work</a></li>
+    <li><a href="#process" data-i18n="navProcess">Process</a></li>
+    <li><a href="mailto:outlymediasupport@gmail.com" class="nav-cta" data-i18n="startProject">Start a Project</a></li>
+  </ul>
+  <div class="nav-actions">
+    <div class="language-switcher" aria-label="Language switcher">
+      <button class="lang-btn active" type="button" data-lang="en" aria-label="English" title="English"><span class="flag flag-us"></span></button>
+      <button class="lang-btn" type="button" data-lang="el" aria-label="Greek" title="Greek"><span class="flag flag-gr"></span></button>
+      <button class="lang-btn" type="button" data-lang="de" aria-label="German" title="German"><span class="flag flag-de"></span></button>
+      <button class="lang-btn" type="button" data-lang="it" aria-label="Italian" title="Italian"><span class="flag flag-it"></span></button>
+    </div>
+    <button class="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-content">
+    <div class="hero-eyebrow reveal"><span></span><span data-i18n="heroEyebrow">Web Design Studio &mdash; Est. 2025</span></div>
+    <h1 class="hero-headline reveal reveal-delay-1">
+      <span class="line"><span class="word" data-i18n="heroLine1">Built</span></span>
+      <span class="line"><span class="word" data-i18n="heroLine2">by hand.</span></span>
+      <span class="line"><span class="word"><span class="accent-word" data-i18n="heroLine3">Done right.</span></span></span>
+    </h1>
+    <div class="hero-sub-row reveal reveal-delay-2">
+      <p class="hero-descriptor" data-i18n="heroDescriptor">I design and build websites for small businesses that deserve a real online presence &mdash; not a template, not an afterthought. Custom code, honest pricing, direct communication.</p>
+      <div class="hero-cta-group">
+        <a href="mailto:outlymediasupport@gmail.com" class="btn-primary">
+          <span data-i18n="startProject">Start a Project</span>
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" /></svg>
+        </a>
+        <a href="#work" class="btn-ghost" data-i18n="seeWork">See the work</a>
+      </div>
+    </div>
+  </div>
+  <div class="hero-bottom reveal reveal-delay-3">
+    <div class="hero-bottom-stat"><strong data-i18n="statRemoteTitle">Remote</strong><span data-i18n="statRemoteText">Work worldwide</span></div>
+    <div class="hero-bottom-stat"><strong data-i18n="statEst">Est. 2026</strong></div>
+    <div class="hero-bottom-stat"><strong data-i18n="statCodeTitle">Custom Code</strong><span data-i18n="statCodeText">No templates</span></div>
+    <div class="hero-bottom-stat"><strong data-i18n="statPriceTitle">Fixed Price</strong><span data-i18n="statPriceText">No surprises</span></div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div id="process-band"><div class="process-marquee-track">
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee0">One-Page Websites</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee1">Mobile-First Design</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee2">Fast Delivery</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee3">Honest Pricing</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee4">Multi-Page Websites</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee5">HTML &amp; CSS</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee6">No Templates</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee7">Real Communication</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee0">One-Page Websites</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee1">Mobile-First Design</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee2">Fast Delivery</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee3">Honest Pricing</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee4">Multi-Page Websites</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee5">HTML &amp; CSS</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee6">No Templates</span></div>
+  <div class="process-item"><div class="process-item-dot"></div><span class="process-item-text" data-i18n="marquee7">Real Communication</span></div>
+</div></div>
+
+<!-- ABOUT / ETHOS -->
+<section id="ethos">
+  <div class="ethos-left">
+    <div class="section-label reveal" data-i18n="approachLabel">The Outly Approach</div>
+    <h2 class="ethos-heading reveal reveal-delay-1" data-i18n-html="approachHeading">A new studio.<br/><em>Real intentions.</em></h2>
+    <p class="ethos-tagline reveal reveal-delay-2" data-i18n-html="approachTagline">No legacy processes.<br/>No coasting on past work.<br/>Just obsessive craft.</p>
+  </div>
+  <div class="ethos-pillars">
+    <div class="ethos-pillar reveal"><div class="pillar-number">01</div><h3 class="pillar-title" data-i18n="pillar1Title">Hunger over history.</h3><p class="pillar-body" data-i18n="pillar1Body">OutlyStudio is new &mdash; and that&rsquo;s worth being honest about. Being new means every project is the best chance to prove something. I&rsquo;m not phoning it in. I&rsquo;m building a reputation one pixel at a time.</p></div>
+    <div class="ethos-pillar reveal reveal-delay-1"><div class="pillar-number">02</div><h3 class="pillar-title" data-i18n="pillar2Title">Your project is my obsession.</h3><p class="pillar-body" data-i18n="pillar2Body">I&rsquo;m not juggling twenty clients. You get the founder &mdash; directly, always. I immerse myself in your brand, your audience, and your goals before I open a single design file. That&rsquo;s rarer than it sounds.</p></div>
+    <div class="ethos-pillar reveal reveal-delay-2"><div class="pillar-number">03</div><h3 class="pillar-title" data-i18n="pillar3Title">Transparency isn&rsquo;t a policy &mdash; it&rsquo;s the product.</h3><p class="pillar-body" data-i18n="pillar3Body">Fixed prices. Clear timelines. One round of revisions before final delivery. If something breaks in the first month, I fix it for free. No smoke, no mirrors &mdash; just a clean handshake and clean code.</p></div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="expertise">
+  <div class="expertise-header"><div><div class="section-label reveal" data-i18n="offerLabel">What I Offer</div><h2 class="expertise-heading reveal reveal-delay-1" data-i18n-html="offerHeading">One offering.<br/>Made well.</h2></div><p class="expertise-note reveal reveal-delay-2" data-i18n-html="offerNote">Focused services, executed properly.<br/>No laundry list &mdash; just the things<br/>I&rsquo;m actually good at.</p></div>
+  <div class="services-grid reveal">
+    <div class="service-card"><span class="service-number">01</span><svg class="service-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" /></svg><h3 class="service-title" data-i18n="service1Title">Website Design &amp; Build</h3><p class="service-desc" data-i18n="service1Desc">One page or multiple &mdash; I design and build your site from scratch. Clean code, fast load times, and a layout that actually makes sense for your business. You buy your domain, I handle the rest.</p><div class="service-price" data-i18n="service1Price">Starting at &euro;200</div></div>
+    <div class="service-card"><span class="service-number">02</span><svg class="service-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg><h3 class="service-title" data-i18n="service2Title">Website Refresh</h3><p class="service-desc" data-i18n="service2Desc">Already have a site that looks outdated or loads slowly? I&rsquo;ll fix the layout, tighten the typography, and make it feel new again &mdash; without a full rebuild.</p><div class="service-price" data-i18n="service2Price">Starting at &euro;150</div></div>
+    <div class="service-card"><span class="service-number">03</span><svg class="service-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" /></svg><h3 class="service-title" data-i18n="service3Title">Hosting &amp; Maintenance</h3><p class="service-desc" data-i18n="service3Desc">I host your site on my server. &euro;30/month keeps it live and running. If something breaks or needs fixing, that&rsquo;s a separate &euro;100+ depending on what&rsquo;s broken &mdash; no subscription, no lock-in.</p><div class="service-price" data-i18n="service3Price">&euro;30 / month hosting &middot; Fixes from &euro;100</div></div>
+    <div class="service-card"><span class="service-number">04</span><svg class="service-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" /></svg><h3 class="service-title" data-i18n="service4Title">Free Consultation</h3><p class="service-desc" data-i18n="service4Desc">Not sure what you need? Let&rsquo;s talk for 20 minutes. I&rsquo;ll tell you honestly what makes sense for your business &mdash; no pitch, no pressure.</p><div class="service-price" data-i18n="service4Price">Always free</div></div>
+  </div>
+</section>
+
+<!-- WORK -->
+<section id="work">
+  <div class="work-header"><div><div class="section-label reveal" data-i18n="workLabel">Selected Work</div><h2 class="work-heading reveal reveal-delay-1" data-i18n="workHeading">Selected Work</h2></div><p class="work-note reveal reveal-delay-2" data-i18n-html="workNote">Two showcased projects.<br/>Braise and Luminal &mdash;<br/>distinct moods, clean builds.</p></div>
+  <div class="work-featured reveal">
+    <div class="work-preview"><div class="bp-nav"><div class="bp-logo">Braise</div><div class="bp-links"><span data-i18n="braiseNav1">Story</span><span data-i18n="braiseNav2">Coffee</span><span data-i18n="braiseNav3">The Space</span><span data-i18n="braiseNav4">Visit</span></div></div><div class="bp-center"><div class="bp-title">BRAISE</div><div class="bp-rule"></div><div class="bp-sub" data-i18n="braiseSub">Specialty Coffee &middot; Est. 2025</div></div><div class="bp-scroll" data-i18n="scroll">Scroll</div></div>
+    <div class="work-info"><div><div class="work-tag"><span class="tag-dot"></span><span data-i18n="completedProject">Completed Project</span></div><h3 class="work-title" data-i18n="braiseTitle">Braise &mdash; Specialty coffee, one page</h3><p class="work-desc" data-i18n="braiseDesc">A specialty café in Athens needed a web presence as considered as their coffee. I designed a dark, editorial one-pager &mdash; letting the brand&rsquo;s warmth and attention to detail do the work, without noise.</p></div><div class="work-meta"><div class="meta-item"><div class="meta-label" data-i18n="metaType">Type</div><div class="meta-value" data-i18n="metaOnePage">One-page website</div></div><div class="meta-item"><div class="meta-label" data-i18n="metaTimeline">Timeline</div><div class="meta-value" data-i18n="braiseTimeline">4 days</div></div><div class="meta-item"><div class="meta-label" data-i18n="metaStack">Stack</div><div class="meta-value">HTML &middot; CSS</div></div></div></div>
+  </div>
+  <div class="work-featured reveal reveal-delay-1">
+    <div class="work-preview luminal-preview"><div class="lp-nav"><div class="lp-logo">Luminal</div><div><span data-i18n="luminalNav1">About</span> &nbsp; <span data-i18n="luminalNav2">Work</span> &nbsp; <span data-i18n="luminalNav3">Services</span> &nbsp; <span data-i18n="luminalNav4">Stories</span></div></div><div class="lp-center"><div class="lp-kicker" data-i18n="luminalKicker">Portrait &middot; Lifestyle &middot; Brand Photography</div><div class="lp-title"><span data-i18n="luminalTitleA">Light is</span> <em data-i18n="luminalTitleB">a language.</em></div><p class="lp-copy" data-i18n="luminalCopy">We photograph the space between a held breath and a smile &mdash; where the truest version of you lives.</p></div><div class="lp-scroll" data-i18n="scroll">Scroll</div></div>
+    <div class="work-info"><div><div class="work-tag"><span class="tag-dot"></span><span data-i18n="showcaseProject">Portfolio Showcase</span></div><h3 class="work-title" data-i18n="luminalWorkTitle">Luminal &mdash; Photography portfolio concept</h3><p class="work-desc" data-i18n="luminalDesc">A warm, editorial portfolio direction for a portrait and brand photographer. Soft tones, quiet navigation, and a first screen that lets the visual style speak immediately.</p></div><div class="work-meta"><div class="meta-item"><div class="meta-label" data-i18n="metaType">Type</div><div class="meta-value" data-i18n="metaPortfolio">Portfolio website</div></div><div class="meta-item"><div class="meta-label" data-i18n="metaTimeline">Timeline</div><div class="meta-value" data-i18n="luminalTimeline">Concept showcase</div></div><div class="meta-item"><div class="meta-label" data-i18n="metaStack">Stack</div><div class="meta-value">HTML &middot; CSS</div></div></div></div>
+  </div>
+  <a href="mailto:outlymediasupport@gmail.com" class="work-next reveal"><div><div class="work-next-label" style="margin-bottom:.75rem;" data-i18n="slotOpen">Slot 03 &mdash; Open</div><div class="work-next-text" data-i18n="nextText">Your project could be next.</div></div><span class="work-next-cta"><span data-i18n="getInTouch">Get in touch</span><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" /></svg></span></a>
+</section>
+
+<!-- PROCESS STEPS -->
+<section id="process">
+  <div class="process-header"><div><div class="section-label reveal" data-i18n="processLabel">How It Works</div><h2 class="process-heading reveal reveal-delay-1" data-i18n-html="processHeading">Four steps.<br/>No surprises.</h2></div><p class="process-sub reveal reveal-delay-2" data-i18n-html="processSub">I keep the process as simple<br/>as the websites I make.<br/>You&rsquo;ll always know what&rsquo;s next.</p></div>
+  <div class="process-steps">
+    <div class="process-step reveal"><div class="step-number">01</div><div class="step-title" data-i18n="step1Title">Discovery Call</div><p class="step-desc" data-i18n="step1Desc">A relaxed 20-minute conversation. I ask about your business, your goals, and what you want people to feel when they land on your site. No forms. No jargon.</p></div>
+    <div class="process-step reveal reveal-delay-1"><div class="step-number">02</div><div class="step-title" data-i18n="step2Title">Proposal &amp; Quote</div><p class="step-desc" data-i18n="step2Desc">Within 48 hours you get a clear one-page proposal with a fixed price and realistic timeline. No hourly billing. No scope creep surprises.</p></div>
+    <div class="process-step reveal reveal-delay-2"><div class="step-number">03</div><div class="step-title" data-i18n="step3Title">Design &amp; Build</div><p class="step-desc" data-i18n="step3Desc">I design and code your site. One round of feedback before the final version. Most projects take 4&ndash;7 days from kickoff to delivery.</p></div>
+    <div class="process-step reveal reveal-delay-3"><div class="step-number">04</div><div class="step-title" data-i18n="step4Title">Launch &amp; Hosting</div><p class="step-desc" data-i18n="step4Desc">You buy your domain, I host it on my server. &euro;30/month keeps it live. If something breaks down the line, fixes start at &euro;100 depending on the issue &mdash; no subscription, no surprises.</p></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left"><div class="footer-cta-label" data-i18n="getInTouch">Get in touch</div><a href="mailto:outlymediasupport@gmail.com" class="footer-email">outlymediasupport@gmail.com</a></div>
+  <div class="footer-right"><ul class="footer-nav"><li><a href="#ethos" data-i18n="navAbout">About</a></li><li><a href="#expertise" data-i18n="navServices">Services</a></li><li><a href="#work" data-i18n="navWork">Work</a></li><li><a href="#process" data-i18n="navProcess">Process</a></li></ul><ul class="footer-social"><li><a href="https://www.instagram.com/outlystudio/" target="_blank" rel="noopener" aria-label="Instagram"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a></li><li><a href="https://www.facebook.com/profile.php?id=61589129035833" target="_blank" rel="noopener" aria-label="Facebook"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a></li></ul></div>
+  <div class="footer-bottom"><div class="footer-brand"><img src="../OutlyStudio Brands/BA561871-613A-4593-8EF0-6CC9C31D8652.JPEG" alt="OutlyStudio" /><span>OutlyStudio</span></div><span class="footer-copy">&copy; 2025 OutlyStudio &middot; Athens, Greece</span></div>
+</footer>
+
+<script>
+  // CURSOR
+  const cursor = document.getElementById('cursor');
+  let mouseX=0,mouseY=0,curX=0,curY=0;
+  document.addEventListener('mousemove',e=>{mouseX=e.clientX;mouseY=e.clientY;});
+  document.querySelectorAll('a,button,.service-card,.work-card,.work-featured').forEach(el=>{
+    el.addEventListener('mouseenter',()=>cursor.classList.add('expand'));
+    el.addEventListener('mouseleave',()=>cursor.classList.remove('expand'));
+  });
+  function animCursor(){curX+=(mouseX-curX)*.22;curY+=(mouseY-curY)*.22;cursor.style.left=curX+'px';cursor.style.top=curY+'px';requestAnimationFrame(animCursor);}
+  animCursor();
+
+  // NAV
+  const nav=document.getElementById('nav');
+  window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',window.scrollY>60),{passive:true});
+
+  // REVEAL
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});
+  },{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+  // HERO WORD ANIMATE
+  document.querySelectorAll('.hero-headline .word').forEach((word,i)=>{
+    word.style.opacity='0';word.style.transform='translateY(60px)';word.style.display='inline-block';
+    word.style.transition=`opacity .9s cubic-bezier(.16,1,.3,1) ${i*.18+.2}s,transform .9s cubic-bezier(.16,1,.3,1) ${i*.18+.2}s`;
+    setTimeout(()=>{word.style.opacity='1';word.style.transform='translateY(0)';},60);
+  });
+
+  // HAMBURGER
+  const hamburger=document.querySelector('.hamburger');
+  const navLinks=document.querySelector('.nav-links');
+  function closeMobileMenu(){
+    navLinks.classList.remove('mobile-open');
+    hamburger.classList.remove('active');
+    document.body.classList.remove('menu-open');
+    hamburger.setAttribute('aria-expanded','false');
+  }
+  hamburger.setAttribute('aria-expanded','false');
+  hamburger.addEventListener('click',()=>{
+    const open=navLinks.classList.toggle('mobile-open');
+    hamburger.classList.toggle('active',open);
+    document.body.classList.toggle('menu-open',open);
+    hamburger.setAttribute('aria-expanded',open?'true':'false');
+  });
+  navLinks.querySelectorAll('a').forEach(a=>a.addEventListener('click',closeMobileMenu));
+  window.addEventListener('resize',()=>{
+    if(window.innerWidth>1180){ closeMobileMenu(); }
+  },{passive:true});
+
+
+  // LANGUAGE SWITCHER
+  const translations = {
+    en: {},
+    el: {
+        navAbout: "Σχετικά",
+        navServices: "Υπηρεσίες",
+        navWork: "Έργα",
+        navProcess: "Διαδικασία",
+        startProject: "Ξεκίνα ένα έργο",
+        heroEyebrow: "Στούντιο σχεδιασμού ιστοσελίδων — από το 2025",
+        heroLine1: "Φτιαγμένο",
+        heroLine2: "στο χέρι.",
+        heroLine3: "Όπως πρέπει.",
+        heroDescriptor: "Σχεδιάζω και κατασκευάζω ιστοσελίδες για μικρές επιχειρήσεις που αξίζουν μια πραγματική online παρουσία — όχι ένα έτοιμο template, όχι κάτι πρόχειρο. Κώδικας στα μέτρα σας, ξεκάθαρες τιμές, άμεση επικοινωνία.",
+        seeWork: "Δες τα έργα",
+        statRemoteTitle: "Εξ αποστάσεως",
+        statRemoteText: "Συνεργασία παγκοσμίως",
+        statEst: "Από το 2026",
+        statCodeTitle: "Κώδικας στα μέτρα σας",
+        statCodeText: "Χωρίς templates",
+        statPriceTitle: "Σταθερή τιμή",
+        statPriceText: "Χωρίς εκπλήξεις",
+        marquee0: "Μονοσέλιδες ιστοσελίδες",
+        marquee1: "Σχεδιασμός πρώτα για κινητά",
+        marquee2: "Γρήγορη παράδοση",
+        marquee3: "Ξεκάθαρες τιμές",
+        marquee4: "Πολυσέλιδες ιστοσελίδες",
+        marquee5: "HTML & CSS",
+        marquee6: "Χωρίς templates",
+        marquee7: "Πραγματική επικοινωνία",
+        approachLabel: "Η προσέγγιση του Outly",
+        approachHeading: "Ένα νέο στούντιο.<br/><em>Με ξεκάθαρη πρόθεση.</em>",
+        approachTagline: "Χωρίς βαριές διαδικασίες.<br/>Χωρίς επανάπαυση σε παλιές δουλειές.<br/>Μόνο προσοχή στη λεπτομέρεια.",
+        pillar1Title: "Δίψα για δουλειά, όχι παλιές δάφνες.",
+        pillar1Body: "Το OutlyStudio είναι νέο — και αυτό το λέω καθαρά. Το να είσαι νέος σημαίνει ότι κάθε έργο είναι ευκαιρία να αποδείξεις κάτι. Δεν δουλεύω στον αυτόματο. Χτίζω τη φήμη μου, ένα pixel τη φορά.",
+        pillar2Title: "Το έργο σας γίνεται δική μου υπόθεση.",
+        pillar2Body: "Δεν μοιράζω την προσοχή μου σε είκοσι πελάτες. Μιλάτε απευθείας με τον ιδρυτή — πάντα. Πριν ανοίξω οποιοδήποτε αρχείο σχεδιασμού, μπαίνω σε βάθος στο brand, στο κοινό και στους στόχους σας. Είναι πιο σπάνιο απ’ όσο ακούγεται.",
+        pillar3Title: "Η διαφάνεια δεν είναι πολιτική — είναι μέρος της δουλειάς.",
+        pillar3Body: "Σταθερές τιμές. Καθαρά χρονοδιαγράμματα. Ένας γύρος διορθώσεων πριν από την τελική παράδοση. Αν κάτι χαλάσει μέσα στον πρώτο μήνα, το διορθώνω δωρεάν. Χωρίς θολά σημεία — μόνο καθαρή συμφωνία και καθαρός κώδικας.",
+        offerLabel: "Τι προσφέρω",
+        offerHeading: "Μία καθαρή υπηρεσία.<br/>Φτιαγμένη σωστά.",
+        offerNote: "Στοχευμένες υπηρεσίες, σωστά εκτελεσμένες.<br/>Όχι ατελείωτη λίστα — μόνο αυτά<br/>που ξέρω να κάνω πραγματικά καλά.",
+        service1Title: "Σχεδιασμός & κατασκευή ιστοσελίδας",
+        service1Desc: "Μία σελίδα ή περισσότερες — σχεδιάζω και κατασκευάζω την ιστοσελίδα σας από την αρχή. Καθαρός κώδικας, γρήγορη φόρτωση και διάταξη που βγάζει νόημα για την επιχείρησή σας. Εσείς αγοράζετε το domain, εγώ αναλαμβάνω τα υπόλοιπα.",
+        service1Price: "Από €200",
+        service2Title: "Ανανέωση ιστοσελίδας",
+        service2Desc: "Έχετε ήδη ιστοσελίδα που δείχνει παλιά ή φορτώνει αργά; Θα βελτιώσω τη δομή, την τυπογραφία και τη συνολική αίσθηση, ώστε να δείχνει ξανά σύγχρονη — χωρίς να χρειαστεί πλήρης ανακατασκευή.",
+        service2Price: "Από €150",
+        service3Title: "Φιλοξενία & συντήρηση",
+        service3Desc: "Φιλοξενώ την ιστοσελίδα σας στον server μου. Με €30 τον μήνα παραμένει online και λειτουργική. Αν κάτι χαλάσει ή χρειαστεί διόρθωση, η χρέωση γίνεται ξεχωριστά, από €100+, ανάλογα με το πρόβλημα — χωρίς συνδρομές-παγίδες και χωρίς δέσμευση.",
+        service3Price: "€30 / μήνα φιλοξενία · διορθώσεις από €100",
+        service4Title: "Δωρεάν συμβουλευτική",
+        service4Desc: "Δεν είστε σίγουροι τι χρειάζεστε; Ας μιλήσουμε για 20 λεπτά. Θα σας πω ειλικρινά τι έχει νόημα για την επιχείρησή σας — χωρίς πίεση και χωρίς επιθετική πώληση.",
+        service4Price: "Πάντα δωρεάν",
+        workLabel: "Επιλεγμένα έργα",
+        workHeading: "Επιλεγμένα έργα",
+        workNote: "Δύο έργα σε παρουσίαση.<br/>Braise και Luminal —<br/>διαφορετικό ύφος, καθαρές κατασκευές.",
+        braiseNav1: "Ιστορία",
+        braiseNav2: "Καφές",
+        braiseNav3: "Ο χώρος",
+        braiseNav4: "Επίσκεψη",
+        braiseSub: "Specialty Coffee · από το 2025",
+        scroll: "Κύλιση",
+        completedProject: "Ολοκληρωμένο έργο",
+        braiseTitle: "Braise — Specialty coffee, one-page ιστοσελίδα",
+        braiseDesc: "Ένα specialty café στην Αθήνα χρειαζόταν μια online παρουσία τόσο προσεγμένη όσο και ο καφές του. Σχεδίασα ένα σκοτεινό, editorial one-pager που αφήνει τη ζεστασιά και την προσοχή στη λεπτομέρεια του brand να μιλήσουν χωρίς περιττό θόρυβο.",
+        metaType: "Τύπος",
+        metaOnePage: "One-page ιστοσελίδα",
+        metaTimeline: "Χρόνος",
+        braiseTimeline: "4 ημέρες",
+        metaStack: "Τεχνολογία",
+        luminalNav1: "Σχετικά",
+        luminalNav2: "Έργα",
+        luminalNav3: "Υπηρεσίες",
+        luminalNav4: "Ιστορίες",
+        luminalKicker: "Πορτρέτο · Lifestyle · Brand φωτογραφία",
+        luminalTitleA: "Το φως είναι",
+        luminalTitleB: "μια γλώσσα.",
+        luminalCopy: "Φωτογραφίζουμε τον χώρο ανάμεσα σε μια κρατημένη ανάσα και ένα χαμόγελο — εκεί όπου ζει η πιο αληθινή εκδοχή σας.",
+        showcaseProject: "Παρουσίαση portfolio",
+        luminalWorkTitle: "Luminal — Concept portfolio φωτογραφίας",
+        luminalDesc: "Μια ζεστή, editorial κατεύθυνση για portfolio φωτογράφου πορτρέτων και brand εικόνας. Απαλοί τόνοι, ήσυχη πλοήγηση και μια πρώτη οθόνη που αφήνει το οπτικό ύφος να φανεί αμέσως.",
+        metaPortfolio: "Ιστοσελίδα portfolio",
+        luminalTimeline: "Concept παρουσίασης",
+        slotOpen: "Θέση 03 — διαθέσιμη",
+        nextText: "Το επόμενο έργο θα μπορούσε να είναι το δικό σας.",
+        getInTouch: "Επικοινωνία",
+        processLabel: "Πώς δουλεύουμε",
+        processHeading: "Τέσσερα βήματα.<br/>Χωρίς εκπλήξεις.",
+        processSub: "Κρατώ τη διαδικασία τόσο απλή<br/>όσο και τις ιστοσελίδες που φτιάχνω.<br/>Ξέρετε πάντα ποιο είναι το επόμενο βήμα.",
+        step1Title: "Κλήση γνωριμίας",
+        step1Desc: "Μια χαλαρή συζήτηση 20 λεπτών. Μιλάμε για την επιχείρησή σας, τους στόχους σας και το τι θέλετε να νιώθει κάποιος όταν μπαίνει στην ιστοσελίδα σας. Χωρίς φόρμες. Χωρίς ορολογία.",
+        step2Title: "Πρόταση & προσφορά",
+        step2Desc: "Μέσα σε 48 ώρες λαμβάνετε μια καθαρή, μονοσέλιδη πρόταση με σταθερή τιμή και ρεαλιστικό χρονοδιάγραμμα. Χωρίς χρέωση ανά ώρα. Χωρίς δυσάρεστες εκπλήξεις στο εύρος της δουλειάς.",
+        step3Title: "Σχεδιασμός & κατασκευή",
+        step3Desc: "Σχεδιάζω και κωδικοποιώ την ιστοσελίδα σας. Περιλαμβάνεται ένας γύρος σχολίων πριν από την τελική έκδοση. Τα περισσότερα έργα χρειάζονται 4–7 ημέρες από την έναρξη μέχρι την παράδοση.",
+        step4Title: "Λανσάρισμα & φιλοξενία",
+        step4Desc: "Εσείς αγοράζετε το domain, εγώ φιλοξενώ την ιστοσελίδα στον server μου. Με €30 τον μήνα παραμένει online. Αν κάτι χαλάσει αργότερα, οι διορθώσεις ξεκινούν από €100, ανάλογα με το θέμα — χωρίς συνδρομές-παγίδες και χωρίς εκπλήξεις."
+    },
+    de: {
+        navAbout: "Über uns",
+        navServices: "Leistungen",
+        navWork: "Projekte",
+        navProcess: "Ablauf",
+        startProject: "Projekt starten",
+        heroEyebrow: "Webdesign-Studio — seit 2025",
+        heroLine1: "Von Hand",
+        heroLine2: "gebaut.",
+        heroLine3: "Sauber umgesetzt.",
+        heroDescriptor: "Ich gestalte und entwickle Websites für kleine Unternehmen, die einen echten Online-Auftritt verdienen — kein Template, keine Nebensache. Individueller Code, transparente Preise, direkte Kommunikation.",
+        seeWork: "Projekte ansehen",
+        statRemoteTitle: "Remote",
+        statRemoteText: "Weltweite Zusammenarbeit",
+        statEst: "Seit 2026",
+        statCodeTitle: "Individueller Code",
+        statCodeText: "Keine Templates",
+        statPriceTitle: "Festpreis",
+        statPriceText: "Keine Überraschungen",
+        marquee0: "One-Page-Websites",
+        marquee1: "Mobile-first Design",
+        marquee2: "Schnelle Umsetzung",
+        marquee3: "Transparente Preise",
+        marquee4: "Mehrseitige Websites",
+        marquee5: "HTML & CSS",
+        marquee6: "Keine Templates",
+        marquee7: "Direkte Kommunikation",
+        approachLabel: "Der Outly-Ansatz",
+        approachHeading: "Ein neues Studio.<br/><em>Mit klarem Anspruch.</em>",
+        approachTagline: "Keine eingefahrenen Prozesse.<br/>Kein Ausruhen auf alten Projekten.<br/>Nur sorgfältiges Handwerk.",
+        pillar1Title: "Ehrgeiz statt Vergangenheit.",
+        pillar1Body: "OutlyStudio ist neu — und das kommuniziere ich offen. Neu zu sein bedeutet: Jedes Projekt ist eine Chance, Qualität zu beweisen. Ich arbeite nicht im Autopilot. Ich baue mir meinen Ruf Pixel für Pixel auf.",
+        pillar2Title: "Ihr Projekt bekommt meine volle Aufmerksamkeit.",
+        pillar2Body: "Ich jongliere nicht zwanzig Kunden gleichzeitig. Sie arbeiten direkt mit dem Gründer — immer. Bevor ich eine Design-Datei öffne, beschäftige ich mich intensiv mit Ihrer Marke, Ihrer Zielgruppe und Ihren Zielen. Das ist seltener, als es klingt.",
+        pillar3Title: "Transparenz ist keine Richtlinie — sie gehört zum Produkt.",
+        pillar3Body: "Festpreise. Klare Zeitpläne. Eine Korrekturrunde vor der finalen Übergabe. Wenn im ersten Monat etwas nicht funktioniert, behebe ich es kostenlos. Kein Nebel, keine Tricks — nur klare Absprachen und sauberer Code.",
+        offerLabel: "Was ich anbiete",
+        offerHeading: "Ein klares Angebot.<br/>Richtig umgesetzt.",
+        offerNote: "Fokussierte Leistungen, sauber ausgeführt.<br/>Keine endlose Liste — nur das,<br/>was ich wirklich gut kann.",
+        service1Title: "Website-Design & Entwicklung",
+        service1Desc: "Eine Seite oder mehrere — ich gestalte und entwickle Ihre Website von Grund auf. Sauberer Code, schnelle Ladezeiten und ein Aufbau, der wirklich zu Ihrem Unternehmen passt. Sie kaufen die Domain, ich kümmere mich um den Rest.",
+        service1Price: "Ab €200",
+        service2Title: "Website-Refresh",
+        service2Desc: "Sie haben bereits eine Website, die veraltet wirkt oder langsam lädt? Ich überarbeite Struktur, Typografie und Gesamtwirkung, damit sie wieder modern wirkt — ohne kompletten Neubau.",
+        service2Price: "Ab €150",
+        service3Title: "Hosting & Wartung",
+        service3Desc: "Ich hoste Ihre Website auf meinem Server. Für €30 im Monat bleibt sie online und stabil erreichbar. Wenn später etwas kaputtgeht oder angepasst werden muss, wird das separat ab €100 berechnet — je nach Aufwand. Kein Abo-Zwang, keine Bindung.",
+        service3Price: "€30 / Monat Hosting · Korrekturen ab €100",
+        service4Title: "Kostenlose Beratung",
+        service4Desc: "Nicht sicher, was Sie brauchen? Lassen Sie uns 20 Minuten sprechen. Ich sage Ihnen ehrlich, was für Ihr Unternehmen sinnvoll ist — ohne Verkaufsdruck und ohne Pitch.",
+        service4Price: "Immer kostenlos",
+        workLabel: "Ausgewählte Projekte",
+        workHeading: "Ausgewählte Projekte",
+        workNote: "Zwei Projekte im Showcase.<br/>Braise und Luminal —<br/>unterschiedliche Stimmungen, sauber umgesetzt.",
+        braiseNav1: "Story",
+        braiseNav2: "Kaffee",
+        braiseNav3: "Der Raum",
+        braiseNav4: "Besuch",
+        braiseSub: "Specialty Coffee · seit 2025",
+        scroll: "Scrollen",
+        completedProject: "Abgeschlossenes Projekt",
+        braiseTitle: "Braise — Specialty Coffee als One-Pager",
+        braiseDesc: "Ein Specialty-Café in Athen brauchte einen Webauftritt, der so durchdacht wirkt wie sein Kaffee. Ich gestaltete einen dunklen, editorialen One-Pager, der Wärme und Detailbewusstsein der Marke sprechen lässt — ohne unnötigen Lärm.",
+        metaType: "Typ",
+        metaOnePage: "One-Page-Website",
+        metaTimeline: "Zeitrahmen",
+        braiseTimeline: "4 Tage",
+        metaStack: "Technik",
+        luminalNav1: "Über uns",
+        luminalNav2: "Projekte",
+        luminalNav3: "Leistungen",
+        luminalNav4: "Stories",
+        luminalKicker: "Porträt · Lifestyle · Markenfotografie",
+        luminalTitleA: "Licht ist",
+        luminalTitleB: "eine Sprache.",
+        luminalCopy: "Wir fotografieren den Moment zwischen angehaltenem Atem und einem Lächeln — dort, wo Ihre ehrlichste Version sichtbar wird.",
+        showcaseProject: "Portfolio-Showcase",
+        luminalWorkTitle: "Luminal — Portfolio-Konzept für Fotografie",
+        luminalDesc: "Eine warme, editoriale Portfolio-Richtung für Porträt- und Markenfotografie. Weiche Töne, ruhige Navigation und ein erster Eindruck, der den visuellen Stil sofort spürbar macht.",
+        metaPortfolio: "Portfolio-Website",
+        luminalTimeline: "Konzept-Showcase",
+        slotOpen: "Slot 03 — frei",
+        nextText: "Ihr Projekt könnte als Nächstes kommen.",
+        getInTouch: "Kontakt aufnehmen",
+        processLabel: "So läuft es ab",
+        processHeading: "Vier Schritte.<br/>Keine Überraschungen.",
+        processSub: "Ich halte den Prozess so einfach<br/>wie die Websites, die ich baue.<br/>Sie wissen immer, was als Nächstes kommt.",
+        step1Title: "Kennenlerngespräch",
+        step1Desc: "Ein entspanntes Gespräch von 20 Minuten. Wir sprechen über Ihr Unternehmen, Ihre Ziele und darüber, was Besucher fühlen sollen, wenn sie auf Ihrer Website landen. Keine Formulare. Kein Fachjargon.",
+        step2Title: "Vorschlag & Angebot",
+        step2Desc: "Innerhalb von 48 Stunden erhalten Sie einen klaren einseitigen Vorschlag mit Festpreis und realistischem Zeitplan. Keine Stundenabrechnung. Keine unangenehmen Überraschungen beim Umfang.",
+        step3Title: "Design & Entwicklung",
+        step3Desc: "Ich gestalte und programmiere Ihre Website. Eine Feedbackrunde vor der finalen Version ist enthalten. Die meisten Projekte dauern 4–7 Tage vom Start bis zur Übergabe.",
+        step4Title: "Launch & Hosting",
+        step4Desc: "Sie kaufen Ihre Domain, ich hoste die Website auf meinem Server. Für €30 im Monat bleibt sie online. Wenn später etwas kaputtgeht, beginnen Korrekturen je nach Thema ab €100 — kein Abo-Zwang, keine Überraschungen."
+    },
+    it: {
+        navAbout: "Chi siamo",
+        navServices: "Servizi",
+        navWork: "Progetti",
+        navProcess: "Processo",
+        startProject: "Inizia un progetto",
+        heroEyebrow: "Studio di web design — dal 2025",
+        heroLine1: "Realizzato",
+        heroLine2: "a mano.",
+        heroLine3: "Come si deve.",
+        heroDescriptor: "Progetto e sviluppo siti web per piccole attività che meritano una vera presenza online — non un template, non qualcosa fatto tanto per esserci. Codice su misura, prezzi chiari, comunicazione diretta.",
+        seeWork: "Guarda i progetti",
+        statRemoteTitle: "Da remoto",
+        statRemoteText: "Collaborazioni in tutto il mondo",
+        statEst: "Dal 2026",
+        statCodeTitle: "Codice su misura",
+        statCodeText: "Niente template",
+        statPriceTitle: "Prezzo fisso",
+        statPriceText: "Nessuna sorpresa",
+        marquee0: "Siti one-page",
+        marquee1: "Design mobile-first",
+        marquee2: "Consegna rapida",
+        marquee3: "Prezzi chiari",
+        marquee4: "Siti multipagina",
+        marquee5: "HTML & CSS",
+        marquee6: "Niente template",
+        marquee7: "Comunicazione diretta",
+        approachLabel: "L’approccio Outly",
+        approachHeading: "Un nuovo studio.<br/><em>Con un’intenzione chiara.</em>",
+        approachTagline: "Niente processi pesanti.<br/>Niente rendita sui lavori passati.<br/>Solo cura del dettaglio.",
+        pillar1Title: "Fame, non curriculum.",
+        pillar1Body: "OutlyStudio è nuovo — e preferisco dirlo con trasparenza. Essere nuovi significa che ogni progetto è un’occasione per dimostrare valore. Non lavoro con il pilota automatico. Costruisco una reputazione, un pixel alla volta.",
+        pillar2Title: "Il tuo progetto avrà tutta la mia attenzione.",
+        pillar2Body: "Non gestisco venti clienti alla volta. Lavori direttamente con il fondatore — sempre. Prima ancora di aprire un file di design, entro nel tuo brand, nel tuo pubblico e nei tuoi obiettivi. È più raro di quanto sembri.",
+        pillar3Title: "La trasparenza non è una regola — fa parte del prodotto.",
+        pillar3Body: "Prezzi fissi. Tempi chiari. Un giro di revisioni prima della consegna finale. Se qualcosa si rompe nel primo mese, lo sistemo gratis. Niente fumo, niente trucchi — solo accordi chiari e codice pulito.",
+        offerLabel: "Cosa offro",
+        offerHeading: "Un’offerta chiara.<br/>Fatta bene.",
+        offerNote: "Servizi mirati, eseguiti con cura.<br/>Niente liste infinite — solo ciò<br/>che so fare davvero bene.",
+        service1Title: "Design e sviluppo del sito",
+        service1Desc: "Una pagina o più pagine — progetto e costruisco il tuo sito da zero. Codice pulito, caricamento veloce e una struttura che ha davvero senso per la tua attività. Tu acquisti il dominio, io mi occupo del resto.",
+        service1Price: "Da €200",
+        service2Title: "Refresh del sito",
+        service2Desc: "Hai già un sito che sembra datato o carica lentamente? Rivedo struttura, tipografia e impatto generale per farlo sentire di nuovo moderno — senza ricostruirlo da capo.",
+        service2Price: "Da €150",
+        service3Title: "Hosting e manutenzione",
+        service3Desc: "Ospito il tuo sito sul mio server. Con €30 al mese resta online e funzionante. Se qualcosa si rompe o serve una modifica, l’intervento viene conteggiato a parte da €100+, in base al problema — nessun abbonamento forzato, nessun vincolo.",
+        service3Price: "€30 / mese hosting · correzioni da €100",
+        service4Title: "Consulenza gratuita",
+        service4Desc: "Non sai bene cosa ti serve? Parliamone per 20 minuti. Ti dirò con sincerità cosa ha senso per la tua attività — senza pitch e senza pressione.",
+        service4Price: "Sempre gratuita",
+        workLabel: "Progetti selezionati",
+        workHeading: "Progetti selezionati",
+        workNote: "Due progetti in showcase.<br/>Braise e Luminal —<br/>atmosfere diverse, build pulite.",
+        braiseNav1: "Storia",
+        braiseNav2: "Caffè",
+        braiseNav3: "Lo spazio",
+        braiseNav4: "Visita",
+        braiseSub: "Specialty Coffee · dal 2025",
+        scroll: "Scorri",
+        completedProject: "Progetto completato",
+        braiseTitle: "Braise — Specialty coffee in una one-page",
+        braiseDesc: "Uno specialty café ad Atene aveva bisogno di una presenza web curata quanto il suo caffè. Ho progettato una one-page scura ed editoriale, lasciando che il calore del brand e l’attenzione ai dettagli parlassero da soli, senza rumore inutile.",
+        metaType: "Tipo",
+        metaOnePage: "Sito one-page",
+        metaTimeline: "Tempistiche",
+        braiseTimeline: "4 giorni",
+        metaStack: "Tecnologia",
+        luminalNav1: "Chi siamo",
+        luminalNav2: "Progetti",
+        luminalNav3: "Servizi",
+        luminalNav4: "Storie",
+        luminalKicker: "Ritratto · Lifestyle · Fotografia di brand",
+        luminalTitleA: "La luce è",
+        luminalTitleB: "un linguaggio.",
+        luminalCopy: "Fotografiamo lo spazio tra un respiro trattenuto e un sorriso — lì dove vive la tua versione più autentica.",
+        showcaseProject: "Vetrina portfolio",
+        luminalWorkTitle: "Luminal — Concept portfolio fotografico",
+        luminalDesc: "Una direzione portfolio calda ed editoriale per fotografia di ritratto e di brand. Toni morbidi, navigazione discreta e una prima schermata che lascia parlare subito lo stile visivo.",
+        metaPortfolio: "Sito portfolio",
+        luminalTimeline: "Concept showcase",
+        slotOpen: "Slot 03 — disponibile",
+        nextText: "Il prossimo progetto potrebbe essere il tuo.",
+        getInTouch: "Contattami",
+        processLabel: "Come funziona",
+        processHeading: "Quattro step.<br/>Nessuna sorpresa.",
+        processSub: "Tengo il processo semplice<br/>quanto i siti che costruisco.<br/>Saprai sempre qual è il prossimo passo.",
+        step1Title: "Chiamata conoscitiva",
+        step1Desc: "Una conversazione rilassata di 20 minuti. Parliamo della tua attività, dei tuoi obiettivi e di cosa vuoi far provare alle persone quando arrivano sul sito. Niente moduli. Niente gergo.",
+        step2Title: "Proposta e preventivo",
+        step2Desc: "Entro 48 ore ricevi una proposta chiara di una pagina, con prezzo fisso e tempi realistici. Nessuna tariffa oraria. Nessuna sorpresa sull’ambito del progetto.",
+        step3Title: "Design e sviluppo",
+        step3Desc: "Disegno e sviluppo il tuo sito. È incluso un giro di feedback prima della versione finale. La maggior parte dei progetti richiede 4–7 giorni dall’avvio alla consegna.",
+        step4Title: "Lancio e hosting",
+        step4Desc: "Tu acquisti il dominio, io ospito il sito sul mio server. Con €30 al mese resta online. Se in futuro qualcosa si rompe, le correzioni partono da €100 in base al problema — nessun abbonamento forzato, nessuna sorpresa."
+    }
+};
+
+  const baseText = {};
+  document.querySelectorAll('[data-i18n]').forEach(el => { baseText[el.dataset.i18n] = el.textContent; });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => { baseText[el.dataset.i18nHtml] = el.innerHTML; });
+  translations.en = baseText;
+
+  function setLanguage(lang) {
+    const dict = translations[lang] || translations.en;
+    document.documentElement.lang = lang === 'el' ? 'el' : lang;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      if (dict[key]) el.textContent = dict[key];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      const key = el.dataset.i18nHtml;
+      if (dict[key]) el.innerHTML = dict[key];
+    });
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+      btn.setAttribute('aria-pressed', btn.dataset.lang === lang ? 'true' : 'false');
+    });
+    localStorage.setItem('outly-language', lang);
+  }
+
+  document.querySelectorAll('.lang-btn').forEach(btn => btn.addEventListener('click', () => setLanguage(btn.dataset.lang)));
+  setLanguage(localStorage.getItem('outly-language') || 'en');
+
+  // MAGNETIC BUTTONS
+  document.querySelectorAll('.btn-primary').forEach(btn=>{
+    btn.addEventListener('mousemove',e=>{
+      const r=btn.getBoundingClientRect();
+      btn.style.transform=`translateY(-2px) translate(${(e.clientX-r.left-r.width/2)*.12}px,${(e.clientY-r.top-r.height/2)*.12}px)`;
+    });
+    btn.addEventListener('mouseleave',()=>btn.style.transform='');
+  });
+</script>
+</body>
+</html>
